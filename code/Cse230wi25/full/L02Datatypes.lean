@@ -154,9 +154,8 @@ value `b` *two* times we get back `b`.
 
 
 def neg_neg : ∀ (b: Bool), neg (neg b) = b := by
-  sorry
-
-
+  intro b
+  cases b <;> rfl
 
 
 
@@ -210,6 +209,17 @@ def neg_neg_2 : ∀ (b : Bool), neg (neg b) = b := by
   . case true => rfl
 
 
+def xor (b1 b2: Bool) : Bool :=
+  match b1 with
+  | Bool.true => neg b2
+  | Bool.false => b2
+
+
+theorem xor_comm: ∀ (b1 b2: Bool), xor b1 b2 = xor b2 b1 := by
+  intros b1 b2
+  cases b1 <;> cases b2 <;> rfl
+
+
 /- @@@
 **Conjunction** Lets write an `and` function that
 - takes two `Bool`s and
@@ -217,9 +227,9 @@ def neg_neg_2 : ∀ (b : Bool), neg (neg b) = b := by
 @@@ -/
 
 def and (b1 b2: Bool) : Bool :=
-  match b1, b2 with
-  | Bool.true, Bool.true => Bool.true
-  | _        , _         => Bool.false
+  match b1 with
+  | Bool.true => b2
+  | Bool.false => Bool.false
 
 
 /- @@@
@@ -234,7 +244,16 @@ the inputs!
 
 
 theorem and_comm : ∀ (b1 b2 : Bool), and b1 b2 = and b2 b1 := by
-  sorry
+  intros b1 b2
+  cases b1
+  . case false =>
+    cases b2
+    . case false => rfl
+    . case true => rfl
+  . case true =>
+    cases b2
+    . case false => rfl
+    . case true => rfl
 
 /- @@@
 
@@ -248,7 +267,8 @@ line and see how the goals change in the `Lean Infoview` panel.
 
 theorem and_comm' : ∀ (b1 b2 : Bool), and b1 b2 = and b2 b1 := by
   -- use the <;> tactic combinator
-  sorry
+  intros b1 b2
+  cases b1 <;> cases b2 <;> rfl
 
 /- @@@
 
@@ -258,7 +278,10 @@ theorem and_comm' : ∀ (b1 b2 : Bool), and b1 b2 = and b2 b1 := by
 
 @@@ -/
 
-def or (b1 b2: Bool) : Bool := sorry
+def or (b1 b2: Bool) : Bool :=
+  match b1 with
+  | Bool.true => Bool.true
+  | Bool.false => b2
 
 /- @@@
 
@@ -268,7 +291,8 @@ i.e. `or` produces the same result no matter the order of the arguments.
 @@@ -/
 
 theorem or_comm : ∀ (b1 b2 : Bool), or b1 b2 = or b2 b1 := by
-  sorry
+  intros b1 b2
+  cases b1 <;> cases b2 <;> rfl
 
 end MyBool
 
@@ -362,7 +386,9 @@ so that the *second* argument is `zero`
 
 theorem add_zero' : ∀ (n: Nat), add n zero = n := by
   intros n
-  sorry
+  induction n
+  . case zero => rfl
+  . case succ => simp [add, *]
 
 /- @@@
 Boo! Now the proof fails because the equation does not apply!
@@ -404,8 +430,7 @@ the above proofs (except, they are actually *checked!*)
 @@@ -/
 
 theorem add_0 : add zero zero = zero := by
-  calc
-    add zero zero = zero := by simp [add] -- just apply the
+  simp [add]
 
 theorem add_1 : add (succ zero) zero = succ zero := by
   calc
@@ -587,7 +612,10 @@ However, just like `add_zero` we need to use **induction** to prove that
 @@@ -/
 
 theorem app_nil : ∀ {α : Type} (xs: List α), app xs nil = xs := by
-  sorry
+  intros α xs
+  induction xs
+  . case nil => rfl
+  . case cons x xs' ih => simp [app, ih]
 
 /- @@@
 Because in the `cons x xs'` case, we require the fact that `app_nil` holds
@@ -597,7 +625,11 @@ tactic will give us as the hypothesis that we can use.
 ## Associativity of Lists
 @@@ -/
 
-theorem app_assoc : ∀ {α : Type} (xs ys zs: List α), app (app xs ys) zs = app xs (app ys zs) := by
-  sorry
+theorem app_assoc : ∀ {α : Type} (xs ys zs: List α),
+  app (app xs ys) zs = app xs (app ys zs) := by
+  intros α xs ys zs
+  induction xs
+  . case nil => rfl
+  . case cons x xs' ih => simp [app, ih]
 
 end MyList
