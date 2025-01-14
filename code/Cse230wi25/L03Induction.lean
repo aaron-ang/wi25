@@ -117,10 +117,16 @@ def itadd (n m: MyNat.Nat) : MyNat.Nat :=
   | zero => m
   | succ n' => itadd n' (succ m)
 
+theorem itadd_eq' : ∀ (n m: MyNat.Nat), itadd n m = MyNat.add n m := by
+  intros n
+  induction n
+  case zero => intro m; rfl
+  case succ => simp [MyNat.add, MyNat.add_succ, itadd, *]
+
 theorem itadd_eq : ∀ (n m: MyNat.Nat), itadd n m = MyNat.add n m := by
   intros n m
   induction n generalizing m
-  case zero => simp [MyNat.add, itadd]
+  case zero => rfl
   case succ => simp [MyNat.add, MyNat.add_succ, itadd, *]
 
 open List

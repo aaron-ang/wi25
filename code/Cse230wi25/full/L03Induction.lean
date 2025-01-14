@@ -51,14 +51,14 @@ theorem add_zero: ∀ (n : Nat), add n zero = n := by
   . case succ => simp [add, *]
 
 theorem add_succ: ∀ (n m : Nat), add n (succ m) = succ (add n m) := by
-  intros n m
+  intros n
   induction n
   . case zero => simp [add]
   . case succ => simp [add, *]
 /- @@@ END:CUT @@@ -/
 
 theorem add_comm : ∀ (n m: Nat), add n m = add m n := by
-  intros n m
+  intros n
   induction n
 /- @@@ START:SORRY @@@-/
   . case zero => simp [add, add_zero]
@@ -106,6 +106,7 @@ the original list.
 @@@ -/
 
 /- @@@ START:CUT @@@ -/
+@[simp]
 theorem app_nil : ∀ {α : Type} (xs: List α), app xs nil = xs := by
   intro α xs
   induction xs
@@ -129,7 +130,7 @@ theorem rev_rev : ∀ {α : Type} (xs: List α), rev (rev xs) = xs := by
   intro α xs
   induction xs
   case nil  => rfl
-  case cons x xs' ih => simp [rev, app, *]
+  case cons x xs' ih => simp [rev, rev_app, app, *]
 
 /- @@@
 Yikes. We're stuck again. What helper lemmas could we need?
@@ -221,7 +222,7 @@ like `∀n. P(n) /\ Q(n)` or even `∀n m, Q(n, m)` which then implies your goal
 def sum (n : Nat) : Nat :=
   match n with
   | 0 => 0
-  | n' + 1 => n + sum n'
+  | n' + 1 => n + sum n' -- not tail-recurisve because we are operating on the result of the recursive call
 
 /- @@@
 
@@ -231,13 +232,13 @@ In an _iterative_ language you might write a **loop**
 to sum the numbers `n + n-1 + ... + 0` e.g.
 
 ```rust
-fn sum_tr(mut n: Nat) {
+fn sum_tr(mut n: Nat) -> Nat {
   let mut acc = 0;
   while let succ m = n {
     acc += n;
     n = m
   }
-  return acc
+  acc
 }
 ```
 
@@ -263,15 +264,14 @@ Lets try to prove that `sum` and `sum'` always compute the *same result*.
 
 @@@ -/
 
-
+theorem sum'_eq: ∀ n acc, sum_tr n acc = sum n + acc := by
+  intros n acc
+  induction n generalizing acc
+  case zero => simp [sum_tr, _root_.sum]
+  case succ => simp_arith [sum_tr, _root_.sum, *]
 
 theorem sum_eq_sum' : ∀ n, sum n = sum' n := by
-  intros n
-  induction n
-/- @@@ START:SORRY @@@ -/
-  case zero => simp_arith [sum, sum']
-  case succ n' ih => simp_arith [sum, sum', sum_tr, ih]
-/- @@@ END:SORRY @@@ -/
+  simp [sum', sum'_eq]
 
 /- @@@
 Oops, we are stuck.
@@ -292,14 +292,8 @@ theorem sum_eq_sum' : ∀ n, sum' n = sum n := by
 @@@ -/
 
 /- @@@ START:CUT @@@ -/
-theorem sum'_eq: ∀ n acc, sum_tr n acc = sum n + acc := by
-  intros n acc
-  induction n generalizing acc
-  case zero => simp_arith [sum_tr, sum]
-  case succ => simp_arith [sum_tr, sum, *]
 
 theorem sum_eq_sum'' : ∀ n, sum' n = sum n := by
-  intros
   simp_arith [sum', sum'_eq]
 /- @@@ END:CUT @@@ -/
 
@@ -354,10 +348,12 @@ the proof of `sum_list_eq_sum_list'` below?
 @@@ -/
 
 theorem sum_list'_eq : ∀ (xs acc), sum_list_tr xs acc = sum_list xs + acc := by
-  sorry
+  intros xs
+  induction xs
+  case nil => simp[sum_list_tr, sum_list]
+  case cons => simp_arith [sum_list_tr, sum_list, *]
 
 theorem sum_list_eq_sum_list' : ∀ xs, sum_list' xs = sum_list xs := by
-  intros xs
   simp_arith [sum_list', sum_list'_eq]
 
 
@@ -388,9 +384,8 @@ theorem rev_tr_app : ∀ {α : Type} (xs ys: List α), rev_tr xs ys = app (rev x
 /- @@@ END:CUT @@@ -/
 
 theorem rev_eq_rev' : ∀ {α : Type} (xs: List α), rev' xs = rev xs := by
-  intros α xs
 /- @@@ START:SORRY @@@ -/
-  simp [rev', app_nil, rev_tr_app]
+  simp [rev', rev_tr_app] -- added @[simp] to app_nil
 /- @@@ END:SORRY @@@ -/
 
 
@@ -430,7 +425,7 @@ def eval' (e: Aexp) := eval_acc e 0
 example : eval' two_plus_three = eval two_plus_three := by rfl
 
 /- @@@
-### QUIZ: Is `eval_acc` tail recursive?
+### QUIZ: Is `eval_acc` tail recursive? Ans: Yes, because the recursive call is the last thing the function does.
 
 Lets try to prove that `eval'` and `eval` are "equivalent".
 
@@ -447,7 +442,6 @@ theorem eval_acc_eq : ∀ e, eval_acc e acc = eval e + acc := by
 /- @@@ END:CUT @@@ -/
 
 theorem eval'_eq_eval : ∀ e, eval e = eval' e := by
-  intros
   simp [eval', eval_acc_eq]
 
 
