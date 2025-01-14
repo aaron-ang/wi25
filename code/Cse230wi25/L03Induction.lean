@@ -238,7 +238,7 @@ theorem add_succ : ∀ (n m), MyNat.add n (succ m) = succ (MyNat.add n m) := by
 theorem itadd_eq' : ∀ (n m: MyNat.Nat), itadd n m = MyNat.add n m := by
   intros n m
   induction n generalizing m
-  case zero => simp [MyNat.add, itadd]
+  case zero => rfl
   case succ => simp [MyNat.add, MyNat.add_succ, itadd, *]
 
 
