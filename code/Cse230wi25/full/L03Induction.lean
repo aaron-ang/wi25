@@ -24,6 +24,18 @@ def add (n m : Nat) : Nat :=
   | zero => m
   | succ n' => succ (add n' m)
 
+-- tail-recursive version
+def add_tr(n m : Nat) : Nat :=
+  match m with
+  | zero => n
+  | succ m' => add_tr (succ n) m'
+
+#eval add (succ (succ zero)) (succ zero)
+
+#eval add_tr (succ (succ zero)) (succ zero)
+
+example : add (succ (succ zero)) (succ zero) = add_tr (succ (succ zero)) (succ zero) := rfl
+
 /- @@@
 ## Trick 1: Helper Lemmas
 
