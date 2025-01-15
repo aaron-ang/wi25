@@ -87,15 +87,16 @@ you can know roughly where we are headed.
 - [Hello!](./lectures/L00Hello.md)
 - [Expressions and Types](./lectures/L01Expressions.md)
 - [Datatypes and Polymorphism](./lectures/L02Datatypes.md)
-- [Recursion and Induction](./lectures/L03Induction.md)
 
 ### Week 2 - Expressions and Evidence
 
+- [Recursion and Induction](./lectures/L03Induction.md)
+- [Handout 1-14](./static/230-handout-1-14.pdf)
 - Compiling Expressions to Stack Machines (Ch03)
-- Induction on Evidence (Ch04)
 
 ### Week 3 - Big Step Semantics
 
+- Induction on Evidence (Ch04)
 - Imperative Programs: States, Commands, Transitions
 - Program Equivalence (Ch07)
 
