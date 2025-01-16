@@ -70,7 +70,6 @@ def app {α : Type} (xs ys: List α) : List α :=
   | x::xs' => x :: app xs' ys
 
 /-
-
 app [] [3,4,5] = [3,4,5]
 
 app (2::[]) [3,4,5] = [3,4,5]
@@ -81,7 +80,6 @@ app (2::[]) [3,4,5] = [3,4,5]
 -/
 
 example : app [] [3,4,5] = [3,4,5] := rfl
-
 example : app [0,1,2] [3,4,5] = [0,1,2,3,4,5] := rfl
 ```
 
@@ -89,7 +87,7 @@ example : app [0,1,2] [3,4,5] = [0,1,2,3,4,5] := rfl
 
 ```lean
 def rev {α : Type} (xs: List α) : List α :=
-  match xs with
+ match xs with
   | [] => []
   | x :: xs' => app (rev xs') [x]
 
@@ -231,6 +229,17 @@ We can do so, by using the `induction n generalizing m` which tells `lean` that
 Now, go and see what the `ih` looks like in the `case succ ...`
 
 This time we can **actually use** the `ih` and so the proof works.
+
+```lean
+theorem add_succ : ∀ (n m), MyNat.add n (succ m) = succ (MyNat.add n m) := by
+ sorry
+
+theorem itadd_eq' : ∀ (n m: MyNat.Nat), itadd n m = MyNat.add n m := by
+  intros n m
+  induction n generalizing m
+  case zero => simp [MyNat.add, itadd]
+  case succ => simp [MyNat.add, MyNat.add_succ, itadd, *]
+```
 
 
 ## Trick 3: Generalizing the Induction Hypothesis
@@ -441,8 +450,6 @@ loop [] [3, 2, 1, 0]
 =>
 [3,2,1,0]
 
-
-
 ```lean
 def rev_tr {α : Type} (xs res: List α) : List α :=
   match xs with
@@ -480,22 +487,25 @@ theorem rev_eq_rev' : ∀ {α : Type} (xs: List α), rev' xs = rev xs := by
 
 **Arithmetic Expressions**
 
+```lean
+inductive Aexp : Type where
+  | const : Nat -> Aexp
+  | plus  : Aexp -> Aexp -> Aexp
+  deriving Repr
+
+open Aexp
+
+def two_plus_three := plus (const 2) (const 3)
+```
+
+
+
+```
     alice_plus
     /          \
    bob_const   bob_const
    |            |
    2            3
-
-
-```lean
-inductive Aexp : Type where
-  | bob_const : Nat -> Aexp
-  | alice_plus  : Aexp -> Aexp -> Aexp
-  deriving Repr
-
-open Aexp
-
-def two_plus_three := alice_plus (bob_const 2) (bob_const 3)
 ```
 
 **Evaluating Expressions**
@@ -503,15 +513,15 @@ def two_plus_three := alice_plus (bob_const 2) (bob_const 3)
 ```lean
 def eval (e: Aexp) : Nat :=
   match e with
-  | bob_const n => n
-  | alice_plus e1 e2 => eval e1 + eval e2
+  | const n => n
+  | plus e1 e2 => eval e1 + eval e2
 
 #eval eval two_plus_three
 
 def eval_acc (e: Aexp) (res: Nat) : Nat :=
   match e with
-  | bob_const n => n + res
-  | alice_plus e1 e2 => eval_acc e2 (eval_acc e1 res)
+  | const n => n + res
+  | plus e1 e2 => eval_acc e2 (eval_acc e1 res)
 
 def eval' (e: Aexp) := eval_acc e 0
 
