@@ -57,6 +57,14 @@ notation:10 st " [ " x " := " v " ] " => upd st x v
 
 def st1 := st0 ["x" := 2] [ "y" := 10 ] [ "z" := 100 ]
 
+def stfunny : State
+  | "x" => 2
+  | "y" => 10
+  | "z" => 100
+  | _   => 0
+
+example: st1 "x" == stfunny "x" := rfl
+
 example : aval aexp_5 st0 = 5 := rfl
 example : aval aexp_x st0 = 0 := rfl
 
@@ -102,7 +110,12 @@ Lets prove that `asimp_const` does not **change the meaning** of the expression 
 @@@ -/
 
 theorem aval_asimp_const : ∀ a s, aval a s = aval (asimp_const a) s  := by
-  sorry
+  intros a s
+  induction a using asimp_const.induct
+  case case1 => rfl
+  case case2 => rfl
+  case case3 => simp [asimp_const, aval, *]
+  case case4 => simp [asimp_const, aval, *]
 
 /- @@@
 ## TACTIC: `simp_all` to simplify _hypotheses_
@@ -113,7 +126,12 @@ Lets flip the order of the equality.
 
 -- REWRITING hypotheses: simp_all
 theorem aval_asimp_const' : ∀ a s, aval (asimp_const a) s  = aval a s := by
-  sorry
+  intros a s
+  induction a using asimp_const.induct
+  case case1 => rfl
+  case case2 => rfl
+  case case3 => simp_all [asimp_const, aval]
+  case case4 => simp_all [asimp_const, aval]
 
 /- @@@
 Oh no! The exact same proof does not work! `lean` is stuck at the goal
@@ -377,4 +395,3 @@ theorem comp_exec : ∀ {s : State} {a : Aexp} { stk : Stack },
   case num n => rfl
   case var x => rfl
   sorry
-
