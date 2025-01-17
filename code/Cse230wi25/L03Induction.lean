@@ -44,10 +44,24 @@ It will be convenient to have **helper lemmas** that tell us that
 @@@ -/
 
 
-theorem add_comm : ∀ (n m: Nat), add n m = add m n := by
+theorem add_zero : ∀ (n: Nat), add n zero = n := by
+  intros n
+  induction n
+  case zero => rfl
+  case succ => simp [add, *]
+
+theorem add_succ : ∀ (n m), add n (succ m) = succ (add n m) := by
   intros n m
   induction n
-  sorry
+  case zero => rfl
+  case succ => simp [add, *]
+
+theorem add_comm : ∀ (n m: Nat), add n m = add m n := by
+  intros n
+  induction n
+  case zero => simp [add, add_zero]
+  case succ => simp [add, add_succ, *]
+
 
 end MyNat
 
@@ -188,7 +202,10 @@ add n' (succ m) == succ (add n' m)
 @@@ -/
 
 theorem add_succ : ∀ (n m), MyNat.add n (succ m) = succ (MyNat.add n m) := by
- sorry
+  intros n m
+  induction n
+  case zero => simp [MyNat.add]
+  case succ => simp [MyNat.add, *]
 
 theorem itadd_eq : ∀ (n m), itadd n m = MyNat.add n m := by
   intros n
@@ -231,9 +248,6 @@ Now, go and see what the `ih` looks like in the `case succ ...`
 
 This time we can **actually use** the `ih` and so the proof works.
 @@@ -/
-
-theorem add_succ : ∀ (n m), MyNat.add n (succ m) = succ (MyNat.add n m) := by
- sorry
 
 theorem itadd_eq' : ∀ (n m: MyNat.Nat), itadd n m = MyNat.add n m := by
   intros n m
@@ -348,7 +362,6 @@ We can write the above with **tail-recursion**
 --   | 0 => acc
 --   | n' + 1 => sum_tr n' (n + acc)
 
--- def sum' (n: Nat) := sum_tr n 0
 
 /- @@@
 
@@ -356,12 +369,14 @@ Lets try to prove that `sum` and `sum'` always compute the *same result*.
 
 @@@ -/
 
+def sum' (n: Nat): Nat := sum_tr n
 
 
 theorem sum_eq_sum' : ∀ n, sum n = sum' n := by
   intros n
   induction n
-  sorry
+  case zero => rfl
+  case succ => simp [sum, sum', sum_tr, loop, *]
 
 /- @@@
 Oops, we are stuck.
@@ -485,10 +500,17 @@ rev_tr xs res
 @@@ -/
 
 theorem app_nil : ∀ {α : Type} (xs: List α), app xs [] = xs := by
-  sorry
+  intros α xs
+  induction xs
+  case nil => rfl
+  case cons => simp [app, *]
 
 theorem rev_tr_helper_theorem : ∀ {α : Type} (xs res : List α),
-  rev_tr xs res = app (rev xs) res := by sorry
+  rev_tr xs res = app (rev xs) res := by
+  intros α xs res
+  induction xs
+  case nil => rfl
+  case cons => simp [rev, rev_tr, app, *]
 
 theorem rev_eq_rev' : ∀ {α : Type} (xs: List α), rev' xs = rev xs := by
   intros α xs

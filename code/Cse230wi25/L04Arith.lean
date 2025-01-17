@@ -79,6 +79,14 @@ notation:10 st " [ " x " := " v " ] " => upd st x v
 
 def st1 := st0 ["x" := 2] [ "y" := 10 ] [ "z" := 100 ]
 
+def stfunny : State
+  | "x" => 2
+  | "y" => 10
+  | "z" => 100
+  | _   => 0
+
+example: st1 "x" == stfunny "x" := rfl
+
 example : aval aexp_5 st0 = 5 := rfl
 example : aval aexp_x st0 = 0 := rfl
 
