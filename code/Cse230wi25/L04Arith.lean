@@ -67,7 +67,7 @@ def aval (a: Aexp) (s: State) : Val :=
   match a with
   | num n => n
   | var x => s x
-  | add a1 a2 => aval a1 s + aval a2 s
+  | add a1 a2 => aval a2 s + aval a1 s
 
 #eval aval aexp_x_plus_y st_funny
 
@@ -493,11 +493,12 @@ Here's a function `exec1` that executes a *single* instruction
 
 
 def exec1 (s:State) (i:Instr) (stk:Stack) : Stack :=
-  match i, stk with
-  | LOADI n, _         => (n :: stk)
-  | LOAD  x, _         => (s x :: stk)
-  | ADD    , n::m::stk => (m + n) :: stk
-  | ADD    , _         => []
+  match i with
+  | LOADI n => (n :: stk)
+  | LOAD  x => (s x :: stk)
+  | ADD     => match stk with
+                | n1::n2::rest => (n2 + n1) :: rest
+                | _ => []
 
 /- @@@
 Here's a function `exec` that executes a *sequence* of instructions by invoking `exec1` on each instruction.
@@ -520,7 +521,34 @@ def comp (a: Aexp) : List Instr :=
   match a with
   | num n => [LOADI n]
   | var x => [LOAD  x]
-  | add a1 a2 => comp a1 ++ comp a2 ++ [ADD]
+  | add a1 a2 => comp a2 ++ comp a1 ++ [ADD]
+
+def a0: Aexp := add (add (var "x") (num 10)) (add (num 5) (var "y"))
+
+def st0' (v: Vname) : Val :=
+  match v with
+  | "x" => 100
+  | "y" => 200
+  | _   => 0
+
+#eval comp a0
+
+theorem test_comp: [aval a0 st0'] = exec st0' (comp a0) [] := by rfl
+
+theorem exec_app : ∀ {s : State} {is1 is2 : List Instr} {stk : Stack},
+  exec s (is1 ++ is2) stk = exec s is2 (exec s is1 stk) := by
+  intros s is1 is2 stk
+  induction is1 generalizing stk
+  case nil => rfl
+  case cons => simp [exec, *]
+
+theorem comp_correct: ∀ {s : State} {a : Aexp} { stk : Stack },
+  exec s (comp a) stk = aval a s :: stk := by
+  intro s a stk
+  induction a generalizing s stk
+  case num n => rfl
+  case var x => rfl
+  case add a1 a2 ih1 ih2 => simp_all [comp, aval, exec, exec1, exec_app]
 
 /- @@@
 ### Proving Compiler Correctness
