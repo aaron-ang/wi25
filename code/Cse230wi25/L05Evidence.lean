@@ -66,7 +66,7 @@ def collatz_step (n : Nat) : Nat :=
 def run_collatz (steps n : Nat) : List Nat :=
   match steps with
   | 0 => [n]
-  | steps + 1 => n :: run_collatz steps (collatz_step n)
+  | k + 1 => n :: run_collatz k (collatz_step n)
 
 /- @@@
 Lets try to `run_collatz` for a few numbers...
@@ -86,10 +86,13 @@ Can we write a function to _count_ the number of steps needed to reach 1?
 @@@ -/
 
 
--- def collatz_steps (n : Nat) : Nat :=
---   match n with
---   | 1 => 1
---   | n => collatz_steps (collatz_step n) + 1
+def collatz_steps (fuel n : Nat) : Nat :=
+  match fuel, n with
+  | 0, _ => 0
+  | _, 1 => 0
+  | f+1, n => collatz_steps f (collatz_step n) + 1
+
+example : collatz_steps 10 5 = 5 := by rfl
 
 /- @@@
 
@@ -191,19 +194,19 @@ def collatz_1 : collatz_reaches_one 1 :=
   collatz_one
 
 def collatz_2 : collatz_reaches_one 2 :=
-  let even_2 : even 2 := by simp [even]
+  let even_2 : even 2 := by rfl
   collatz_evn even_2 (collatz_1)
 
 def collatz_4 : collatz_reaches_one 4 :=
-  let even_4 : even 4 := by simp [even]
+  let even_4 : even 4 := by rfl
   collatz_evn even_4 (collatz_2)
 
 def collatz_8 : collatz_reaches_one 8 :=
-  let even_8 : even 8 := by simp [even]
+  let even_8 : even 8 := by rfl
   collatz_evn even_8 (collatz_4)
 
 def collatz_16 : collatz_reaches_one 16 :=
-  let even_16 : even 16 := by simp [even]
+  let even_16 : even 16 := by rfl
   collatz_evn even_16 (collatz_8)
 
 def collatz_5 : collatz_reaches_one 5 :=
@@ -219,25 +222,20 @@ theorem collatz_5_tt : collatz_reaches_one 5 := by
   apply collatz_odd
   simp [even]
   apply collatz_evn
-  simp [even]
-  simp [half]
+  rfl
   apply collatz_evn
-  simp [even]
-  simp [half]
+  rfl
   apply collatz_evn
-  simp [even]
-  simp [half]
+  rfl
   apply collatz_evn
-  simp [even]
-  simp [half]
+  rfl
   apply collatz_one
 
 /- @@@
 Finally, you can **state** the Collatz conjecture as follows:
 @@@ -/
 
-theorem collatz_theorem : ∀ n, collatz_reaches_one n := by
-  sorry  -- *well* out of the scope of CSE 230 ...
+axiom collatz_theorem : ∀ n, n > 0 -> collatz_reaches_one n
 
 /- @@@
 
@@ -318,6 +316,9 @@ def even_8' : ev 8 := by
   constructor
   constructor
 
+def even_8_repeat : ev 8 := by
+  repeat constructor
+
 /- @@@
 ### Tactic: `solve_by_elim`
 
@@ -340,7 +341,10 @@ then we can construct evidence that `ev n`.
 
 theorem even_ev : ∀ {n : Nat}, even n = true -> ev n := by
   intros n h
-  sorry
+  induction n using even.induct
+  . case case1 => constructor
+  . case case2 => simp_all [even]
+  . case case3 => simp_all [even]; solve_by_elim
 
 /- @@@
 ## Destructing / Using Evidence
@@ -353,8 +357,10 @@ How can we possibly prove this?
 @@@ -/
 
 theorem ev_even : ∀ {n : Nat}, ev n -> even n = true := by
-  sorry
-
+  intros n ev_n
+  induction ev_n
+  . case evZ => rfl
+  . case evSS => simp_all [even]
 
 /- @@@
 ## Example: Reflexive, Transitive Closure
@@ -413,7 +419,7 @@ Lets define this as an inductive proposition
 @@@ -/
 
 inductive star {α : Type} (r: α -> α -> Prop) : α -> α -> Prop where
-  | refl : ∀ {a : α}, star r a a
+  | refl : ∀ {x : α}, star r x x
   | step : ∀ {x y z : α}, r x y -> star r y z -> star r x z
 
 open star
@@ -424,8 +430,17 @@ We can now define `ancestor_of` using `star`, and then test it out on a few exam
 
 abbrev ancestor_of := star parent_of
 
-example : ancestor_of alice alice := by
-  sorry
+example : ancestor_of alice alice := by constructor
+
+example : ancestor_of alice diane := by
+  repeat constructor
+
+theorem star_transitive : star r x y -> star r y z -> star r x z := by
+  intros xy yz
+  cases xy
+  case refl => sorry
+  case step => sorry
+
 
 
 /- @@@
@@ -491,4 +506,3 @@ theorem S_equiv_T : ∀ {w : List Alphabet}, gS w ↔ gT w := by
   constructor
   apply S_imp_T
   apply T_imp_S
-
