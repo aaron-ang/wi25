@@ -73,6 +73,11 @@ infixr:8 ";;"  => Com.Seq
 notation:10 "IF" b "THEN" c1 "ELSE" c2 => Com.If b c1 c2
 notation:12 "WHILE" b "DO" c "END" => Com.While b c
 
+
+def a_10 := "a" <~ 10
+def b_20 := "b" <~ 20
+def x_ab := "x" <~ "a" + var "b"
+
 def com0 := x <~ y + 1
 def com1 := y <~ 2
 def com2 := com0 ;; com1
@@ -85,6 +90,18 @@ def st_x_10_y_20 := st0 [x := 10 ] [ y := 20]
 
 #eval com3
 #eval com4
+
+def meaning (c: Com) (s0: State): State :=
+  match c with
+    | Skip => s0
+    | Assign x a => upd s0 x (aval a s0)
+    | Com.Seq c1 c2 => meaning c2 (meaning c1 s0)
+    | If b c1 c2 => if bval b s0 then meaning c1 s0 else meaning c2 s0
+    | While b c => if bval b s0
+                    then
+                      let s1 := (meaning c s0)
+                      meaning (While b c) s1
+                    else s0
 
 /- @@@
 ## Big Step Semantics for `Com`

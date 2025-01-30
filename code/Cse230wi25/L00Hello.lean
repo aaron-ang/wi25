@@ -266,8 +266,7 @@ theorem sum_eq : ∀ (n: Nat),  2 * sum n = n * (n + 1) := by
   induction n
   . case zero =>
     rfl
-  . case succ =>
-    rename_i m ih
+  . case succ m ih =>
     simp_arith [sum, ih, Nat.mul_add, Nat.mul_comm]
 
 /- @@@

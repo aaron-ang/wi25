@@ -235,6 +235,7 @@ We can use this helper to complete the proof
 theorem aval_asimp : ∀ a s, aval a s = aval (asimp a) s := by
   intros a s
   induction a <;> simp [asimp, aval, aval_plus, *]
+  sorry
 
 
 /- @@@
@@ -509,4 +510,3 @@ theorem comp_exec : ∀ {s : State} {a : Aexp} { stk : Stack },
   case num n => rfl
   case var x => rfl
   sorry
-

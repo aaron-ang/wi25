@@ -504,4 +504,4 @@ theorem alt_len' : ∀ {α : Type} (xs ys : List α), len (alt xs ys) = len xs +
   induction xs, ys using alt.induct
   . case case1 => simp [alt, len]
   . case case2 => simp [alt, len]
-  . case case3 => simp_arith [alt, len, *]
+  . case case3 => simp_all_arith [alt, len]

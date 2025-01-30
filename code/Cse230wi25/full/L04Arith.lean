@@ -43,6 +43,11 @@ def st0 : State := λ _ => 0
 def upd (s: State) (x: Vname) (v: Val) : State :=
   λ y => if y = x then v else s y
 
+def st0_x_100 : State := upd st0 "x" 100
+
+#eval st0 "y"
+#eval st0_x_100 "x"
+
 /- @@@
 ## Evaluation
 @@@ -/

@@ -444,6 +444,16 @@ example : ancestor_of esther fred := by
   sorry
 
 
+theorem ancestor_of_trans : ∀ {a b c} ,
+  ancestor_of a b -> ancestor_of b c -> ancestor_of a c := by
+  intros a b c anc_ab anc_bc
+  induction anc_ab
+  case refl => assumption
+  case step =>
+    simp_all
+    constructor
+    assumption
+    assumption
 /- @@@
 
 If you think about it, if
