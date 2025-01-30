@@ -66,7 +66,7 @@ def collatz_step (n : Nat) : Nat :=
 def run_collatz (steps n : Nat) : List Nat :=
   match steps with
   | 0 => [n]
-  | k + 1 => n :: run_collatz k (collatz_step n)
+  | steps + 1 => n :: run_collatz steps (collatz_step n)
 
 /- @@@
 Lets try to `run_collatz` for a few numbers...
@@ -86,13 +86,10 @@ Can we write a function to _count_ the number of steps needed to reach 1?
 @@@ -/
 
 
-def collatz_steps (fuel n : Nat) : Nat :=
-  match fuel, n with
-  | 0, _ => 0
-  | _, 1 => 0
-  | f+1, n => collatz_steps f (collatz_step n) + 1
-
-example : collatz_steps 10 5 = 5 := by rfl
+-- def collatz_steps (n : Nat) : Nat :=
+--   match n with
+--   | 1 => 1
+--   | n => collatz_steps (collatz_step n) + 1
 
 /- @@@
 
@@ -194,19 +191,19 @@ def collatz_1 : collatz_reaches_one 1 :=
   collatz_one
 
 def collatz_2 : collatz_reaches_one 2 :=
-  let even_2 : even 2 := by rfl
+  let even_2 : even 2 := by simp [even]
   collatz_evn even_2 (collatz_1)
 
 def collatz_4 : collatz_reaches_one 4 :=
-  let even_4 : even 4 := by rfl
+  let even_4 : even 4 := by simp [even]
   collatz_evn even_4 (collatz_2)
 
 def collatz_8 : collatz_reaches_one 8 :=
-  let even_8 : even 8 := by rfl
+  let even_8 : even 8 := by simp [even]
   collatz_evn even_8 (collatz_4)
 
 def collatz_16 : collatz_reaches_one 16 :=
-  let even_16 : even 16 := by rfl
+  let even_16 : even 16 := by simp [even]
   collatz_evn even_16 (collatz_8)
 
 def collatz_5 : collatz_reaches_one 5 :=
@@ -222,20 +219,25 @@ theorem collatz_5_tt : collatz_reaches_one 5 := by
   apply collatz_odd
   simp [even]
   apply collatz_evn
-  rfl
+  simp [even]
+  simp [half]
   apply collatz_evn
-  rfl
+  simp [even]
+  simp [half]
   apply collatz_evn
-  rfl
+  simp [even]
+  simp [half]
   apply collatz_evn
-  rfl
+  simp [even]
+  simp [half]
   apply collatz_one
 
 /- @@@
 Finally, you can **state** the Collatz conjecture as follows:
 @@@ -/
 
-axiom collatz_theorem : ∀ n, n > 0 -> collatz_reaches_one n
+theorem collatz_theorem : ∀ n, collatz_reaches_one n := by
+  sorry  -- *well* out of the scope of CSE 230 ...
 
 /- @@@
 
@@ -316,9 +318,6 @@ def even_8' : ev 8 := by
   constructor
   constructor
 
-def even_8_repeat : ev 8 := by
-  repeat constructor
-
 /- @@@
 ### Tactic: `solve_by_elim`
 
@@ -341,10 +340,12 @@ then we can construct evidence that `ev n`.
 
 theorem even_ev : ∀ {n : Nat}, even n = true -> ev n := by
   intros n h
+/- @@@ START:SORRY @@@ -/
   induction n using even.induct
-  . case case1 => constructor
-  . case case2 => simp_all [even]
-  . case case3 => simp_all [even]; solve_by_elim
+  case case1 => constructor
+  case case2 => contradiction
+  case case3 n' ih' => simp_all [even]; constructor; assumption
+/- @@@ END:SORRY @@@ -/
 
 /- @@@
 ## Destructing / Using Evidence
@@ -357,10 +358,13 @@ How can we possibly prove this?
 @@@ -/
 
 theorem ev_even : ∀ {n : Nat}, ev n -> even n = true := by
-  intros n ev_n
-  induction ev_n
-  . case evZ => rfl
-  . case evSS => simp_all [even]
+/- @@@ START:SORRY @@@ -/
+  intros n h
+  induction h
+  case evZ  => rfl
+  case evSS => simp [even, *]
+/- @@@ END:SORRY @@@ -/
+
 
 /- @@@
 ## Example: Reflexive, Transitive Closure
@@ -419,7 +423,7 @@ Lets define this as an inductive proposition
 @@@ -/
 
 inductive star {α : Type} (r: α -> α -> Prop) : α -> α -> Prop where
-  | refl : ∀ {x : α}, star r x x
+  | refl : ∀ {a : α}, star r a a
   | step : ∀ {x y z : α}, r x y -> star r y z -> star r x z
 
 open star
@@ -430,17 +434,37 @@ We can now define `ancestor_of` using `star`, and then test it out on a few exam
 
 abbrev ancestor_of := star parent_of
 
-example : ancestor_of alice alice := by constructor
+example : ancestor_of alice alice := by
+  sorry
 
 example : ancestor_of alice diane := by
-  repeat constructor
+  sorry
 
-theorem star_transitive : star r x y -> star r y z -> star r x z := by
-  intros xy yz
-  cases xy
-  case refl => sorry
-  case step => sorry
+example : ancestor_of esther fred := by
+  sorry
 
+
+/- @@@
+
+If you think about it, if
+
+- if `a` is an `ancestor_of` some person `b`,
+- and `b` is an `ancestor_of` some person `c`
+
+then
+
+- `a` should _also_ be an `ancestor_of `c` ?
+
+In fact, this **transitivity** fact should hold for *any* `star r`. Lets try to prove it!
+
+**HINT:** The `solve_by_elim` tactic is quite handy.
+
+@@@ -/
+
+theorem star_trans : ∀ {α : Type} {r : α -> α -> Prop} {a b c : α},
+  star r a b -> star r b c -> star r a c :=
+  by
+  sorry
 
 
 /- @@@
@@ -494,12 +518,38 @@ that is complete the proofs of `S_imp_T` and `T_imp_S` below.
 
 @@@-/
 
+/- @@@ START:CUT @@@ -/
+theorem T_append : ∀ {s1 s2 : List Alphabet}, gT s1 -> gT s2 -> gT (s1 ++ s2) := by
+  intros s1 s2 T_s1 T_s2
+  induction T_s2
+  case gT0 => simp [List.append_nil]; assumption
+  case gT1 t1' t2' _ _ _ _ =>
+    have h : (s1 ++ (t1' ++ ([a] ++ t2' ++ [b]))) = (s1 ++ t1' ++ ([a] ++ t2' ++ [b])) := by simp [List.append_assoc]
+    rw [h]
+    constructor
+    assumption
+    assumption
+/- @@@ END:CUT @@@ -/
 
 theorem S_imp_T : ∀ {w : List Alphabet}, gS w -> gT w := by
-  sorry
+/- @@@ START:SORRY @@@ -/
+  intros _ gs
+  induction gs
+  case gS0 => constructor
+  case gS1 => apply (gT1 gT0); assumption
+  case gS2 _ s1 s2 _ _ T_s1 T_s2 => apply T_append <;> assumption
+/- @@@ END:SORRY @@@ -/
 
 theorem T_imp_S : ∀ {w : List Alphabet}, gT w -> gS w := by
-  sorry
+/- @@@ START:SORRY @@@ -/
+  intros _ gt
+  induction gt
+  case gT0 => constructor
+  case gT1 => constructor
+              . case _ => simp_all [] -- assumption
+              . case _ => constructor
+                          simp_all [List.append]
+/- @@@ END:SORRY @@@ -/
 
 theorem S_equiv_T : ∀ {w : List Alphabet}, gS w ↔ gT w := by
   intros w
