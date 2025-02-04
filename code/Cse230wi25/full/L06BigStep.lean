@@ -140,23 +140,23 @@ inductive BigStep : Com -> State -> State -> Prop where
                 BigStep Skip st st
   | Assign : ∀ {st a n},
                 BigStep (Assign a n) st (st [a := aval n st])
-  | Seq    : ∀ {c1 c2 st1 st2 st3},
-                BigStep c1 st1 st2 -> BigStep c2 st2 st3 ->
-                BigStep (Seq c1 c2) st1 st3
-  | IfTrue : ∀ {b c1 c2 st st'},
-                bval b st = true -> BigStep c1 st st' ->
-                BigStep (If b c1 c2) st st'
-  | IfFalse : ∀ {b c1 c2 st st'},
-                bval b st = false -> BigStep c2 st st' ->
-                BigStep (If b c1 c2) st st'
-  | WhileFalse : ∀ {b c st},
-                bval b st = false ->
-                BigStep (While b c) st st
-  | WhileTrue : ∀ {b c st st' st''},
-                bval b st = true -> BigStep c st st' -> BigStep (While b c) st' st'' ->
-                BigStep (While b c) st st''
+  | Seq    : ∀ {c1 c2 st1 st2 t},
+                BigStep c1 st1 st2 -> BigStep c2 st2 t ->
+                BigStep (Seq c1 c2) st1 t
+  | IfTrue : ∀ {b c1 c2 s t},
+                bval b s = true -> BigStep c1 s t ->
+                BigStep (If b c1 c2) s t
+  | IfFalse : ∀ {b c1 c2 s t},
+                bval b s = false -> BigStep c2 s t ->
+                BigStep (If b c1 c2) s t
+  | WhileFalse : ∀ {b c s},
+                bval b s = false ->
+                BigStep (While b c) s s
+  | WhileTrue : ∀ {b c st st' t},
+                bval b st = true -> BigStep c st st' -> BigStep (While b c) st' t ->
+                BigStep (While b c) st t
 
-notation:12 "⟨" c "," s "⟩ ==> " t  => BigStep c s t
+notation:12 "⟨" c "," s "⟩" "==>" t  => BigStep c s t
 
 /- @@@
 
@@ -199,20 +199,18 @@ Can you try to formalize the above "english" as a precise theorem? (Ex 7.1 from 
 @@@ -/
 
 /- @@@ START: CUT @@@ -/
-def assigned(c: Com) : Vname -> Bool :=
+def assigned(c: Com) (x: Vname): Bool :=
   match c with
-  | Com.Assign x _ => fun y => x == y
-  | Com.Seq c1 c2  => fun y => assigned c1 y || assigned c2 y
-  | Com.If _ c1 c2 => fun y => assigned c1 y || assigned c2 y
-  | Com.While _ c  => fun y => assigned c y
-  | Com.Skip       => fun _ => false
+  | Com.Assign y _ => x == y
+  | Com.Seq c1 c2  => assigned c1 x || assigned c2 x
+  | Com.If _ c1 c2 => assigned c1 x || assigned c2 x
+  | Com.While _ c  => assigned c x
+  | Com.Skip       => false
 
-theorem ex_unchanged : (⟨ c, s ⟩ ==> t) -> (assigned c x == false) -> s x = t x := by
-  intros cst asg
-  induction cst <;> simp_all [assigned]
-  . case Assign st a n =>
-    simp_all [upd]
-    split <;> simp_all []
+theorem ex_unchanged: ∀ {x c s t},
+  (⟨ c, s ⟩ ==> t) -> (assigned c x == false) -> s x = t x := by
+  intros x c s t cst asg
+  induction cst <;> simp_all [assigned, upd]
 /- @@@ END: CUT @@@ -/
 
 
@@ -234,6 +232,21 @@ def equiv_com (c1 c2 : Com) := ∀ {st st' : State}, ( ⟨ c1, st ⟩ ==> st') �
 
 infix:50 "≃"  => equiv_com
 
+theorem skip_skip': (Skip;; Skip) ≃ Skip := by
+  simp [equiv_com]
+  intros s t
+  constructor
+  . case mp => -- modus ponens
+    intros skip_skip
+    cases skip_skip
+    rename_i skip1 skip2
+    cases skip1
+    assumption
+  . case mpr =>
+    intros skip
+    cases skip
+    solve_by_elim
+
 /- @@@
 Lets prove that a sequence of three commands `c1,c2,c3` does the same thing,
 no matter where you put the `;;` i.e. `(c1;;c2);;c3` is equivalant to `c1;;(c2;;c3)`
@@ -243,20 +256,21 @@ no matter where you put the `;;` i.e. `(c1;;c2);;c3` is equivalant to `c1;;(c2;;
 
 theorem seq_assoc : ∀ {c1 c2 c3}, (c1 ;; (c2 ;; c3)) ≃ ((c1 ;; c2) ;; c3) := by
 /- @@@ START:SORRY @@@ -/
-   intros c1 c2 c3 st st
-   constructor    -- This breaks the `≃` into tw
-   . case mp =>
-     intros tx1_23
-     cases tx1_23
-     rename_i tx23
-     cases tx23
-     repeat (constructor; repeat assumption)
-   . case mpr =>
-     intros tx12_3
-     cases tx12_3
-     rename_i tx1_2 _
-     cases tx1_2
-     repeat (constructor; repeat assumption)
+  simp [equiv_com]
+  intros c1 c2 c3 s t
+  constructor    -- This breaks the `≃` into tw
+  . case mp =>
+    intros c12_3
+    cases c12_3
+    rename_i c12 c3
+    cases c12
+    repeat (constructor; repeat assumption)
+  . case mpr =>
+    intros tx12_3
+    cases tx12_3
+    rename_i tx1_2 _
+    cases tx1_2
+    repeat (constructor; repeat assumption)
 /- @@@ END:SORRY @@@ -/
 
 /- @@@
@@ -315,7 +329,11 @@ theorem if_c_c_stuck : ∀ { b c }, (IF b THEN c ELSE c) ≃ c := by
     intros tx_if; cases tx_if <;> assumption
    case mpr =>
     intros tx_c
-    sorry -- STUCK! we don't know if `bval b s` is `true` or `false`!
+    cases hb: bval b s
+    . case false =>
+      apply BigStep.IfFalse <;> assumption
+    . case true =>
+      apply BigStep.IfTrue <;> assumption
 
 /- @@@
 
