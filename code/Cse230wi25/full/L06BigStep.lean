@@ -1,4 +1,4 @@
-import Cse230wi25.L04Arith
+import Cse230wi25.full.L04Arith
 
 set_option pp.fieldNotation false
 set_option pp.proofs true
@@ -482,7 +482,8 @@ def reads (a: Aexp) (x: Vname) : Bool :=
   | num _     => false
   | add a1 a2 => reads a1 x || reads a2 x
 
-theorem unmodified_assign: ∀ {x a n s}, reads a x = false -> (aval a (s [x := n]) = aval a s) := by
+theorem unmodified_assign: ∀ {x a n s},
+  reads a x = false -> (aval a (s [x := n]) = aval a s) := by
   intros x a n s not_reads_x
   induction a <;> simp_all [aval, reads]
   . case var => simp_all [upd]; intros; simp_all []
