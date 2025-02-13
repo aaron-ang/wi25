@@ -140,21 +140,21 @@ inductive BigStep : Com -> State -> State -> Prop where
                 BigStep Skip st st
   | Assign : ∀ {st x a},
                 BigStep (Assign x a) st (st [x := aval a st])
-  | Seq    : ∀ {c1 c2 st1 st2 t},
-                BigStep c1 st1 st2 -> BigStep c2 st2 t ->
-                BigStep (Seq c1 c2) st1 t
-  | IfTrue : ∀ {b c1 c2 s t},
-                bval b s = true -> BigStep c1 s t ->
-                BigStep (If b c1 c2) s t
-  | IfFalse : ∀ {b c1 c2 s t},
-                bval b s = false -> BigStep c2 s t ->
-                BigStep (If b c1 c2) s t
-  | WhileFalse : ∀ {b c s},
-                bval b s = false ->
-                BigStep (While b c) s s
-  | WhileTrue : ∀ {b c st st' t},
-                bval b st = true -> BigStep c st st' -> BigStep (While b c) st' t ->
-                BigStep (While b c) st t
+  | Seq    : ∀ {c1 c2 st1 st2 st3},
+                BigStep c1 st1 st2 -> BigStep c2 st2 st3 ->
+                BigStep (Seq c1 c2) st1 st3
+  | IfTrue : ∀ {b c1 c2 st st'},
+                bval b st = true -> BigStep c1 st st' ->
+                BigStep (If b c1 c2) st st'
+  | IfFalse : ∀ {b c1 c2 st st'},
+                bval b st = false -> BigStep c2 st st' ->
+                BigStep (If b c1 c2) st st'
+  | WhileFalse : ∀ {b c st},
+                bval b st = false ->
+                BigStep (While b c) st st
+  | WhileTrue : ∀ {b c st st' st''},
+                bval b st = true -> BigStep c st st' -> BigStep (While b c) st' st'' ->
+                BigStep (While b c) st st''
 
 notation:12 "⟨" c "," s "⟩" "==>" t  => BigStep c s t
 

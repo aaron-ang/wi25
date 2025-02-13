@@ -1,10 +1,11 @@
+```lean
 import Cse230wi25.BigStep
 import Cse230wi25.L07Axiomatic
 
 set_option pp.fieldNotation false
 set_option pp.proofs true
+```
 
-/- @@@
 
 # Automating Floyd-Hoare with Verification Conditions
 
@@ -25,9 +26,7 @@ In fact, the rules are *mostly* **syntax directed** meaning that there is
 Next, lets see how we can automate away more or less everything except
 the above.
 
-@@@ -/
 
-/- @@@
 
 ## Annotated Commands
 
@@ -36,22 +35,23 @@ loop invariant, so we can define a `ACom` type which looks just like
 the previous `Com` except for the loop constructor which is now of the
 form `While inv b c` case, so the `inv` is baked into the code.
 
-@@@ -/
 
 
+```lean
 inductive ACom where
   | Skip   : ACom
   | Assign : Vname -> Aexp -> ACom
   | Seq    : ACom  -> ACom -> ACom
   | If     : Bexp  -> ACom -> ACom -> ACom
   | While  : Assertion -> Bexp  -> ACom -> ACom
-open ACom
 
-/- @@@
+open ACom
+```
+
 In fact, if we `erase` the `inv` from each while, we can convert an `ACom` program
 back into the old `Com` programs.
-@@@ -/
 
+```lean
 @[simp]
 def erase (c : ACom) : Com :=
   match c with
@@ -60,19 +60,19 @@ def erase (c : ACom) : Com :=
   | ACom.Seq c1 c2   => Com.Seq     (erase c1) (erase c2)
   | ACom.If b c1 c2  => Com.If b    (erase c1) (erase c2)
   | ACom.While _ b c => Com.While b (erase c)
+```
 
-/- @@@
 As before we can define some "notation" to make it easier to write `ACom` programs.
-@@@ -/
 
+```lean
 notation:10 x "<~" e  => ACom.Assign x (ToAexp.toAexp e)
 infixr:20 ";;"  => ACom.Seq
 notation:10 "IF" b "THEN" c1 "ELSE" c2 => ACom.If b c1 c2
 notation:12 "WHILE {-@" inv "@-}" b "DO" c "END" => ACom.While inv (ToBexp.toBexp b) c
 notation:20 "[|" c "|]" => erase c
 notation:10 "⊢" " {|" p "|}" c "{|" q "|}" => FH p (erase c) q
+```
 
-/- @@@
 
 Specifically, note the `⊢ {| p |} c {| q |}` triple
 which means that the triple holds for the **erased**
@@ -86,8 +86,8 @@ of the **weakest precondition** `wp c q` which defines the
 the command `c` will yield a *final state* in which the
 assertion `q` is guaranteed to hold.
 
-@@@ -/
 
+```lean
 @[simp]
 def wp (c: ACom) (q : Assertion) : Assertion :=
   match c with
@@ -214,3 +214,6 @@ theorem imp_sum' :
     rename_i s _ _
     generalize hx : s x = vx
     cases vx <;> simp_all [sum, Nat.add_assoc]
+```
+
+
