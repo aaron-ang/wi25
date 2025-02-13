@@ -33,4 +33,4 @@ inductive BigStep : Com -> State -> State -> Prop where
                 bval b st = true -> BigStep c st st' -> BigStep (While b c) st' st'' ->
                 BigStep (While b c) st st''
 
-notation:12 "⟨" c "," s "⟩ ==> " t  => BigStep c s t
+notation:12 "⟨" c "," s "⟩" "==>" t  => BigStep c s t

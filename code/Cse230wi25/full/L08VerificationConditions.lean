@@ -68,7 +68,7 @@ As before we can define some "notation" to make it easier to write `ACom` progra
 notation:10 x "<~" e  => ACom.Assign x (ToAexp.toAexp e)
 infixr:20 ";;"  => ACom.Seq
 notation:10 "IF" b "THEN" c1 "ELSE" c2 => ACom.If b c1 c2
-notation:12 "WHILE {-@" inv "@-}" b "DO" c "END" => ACom.While inv (ToBexp.toBexp b) c
+notation:12 "WHILE" "{-@" inv "@-}" b "DO" c "END" => ACom.While inv (ToBexp.toBexp b) c
 notation:20 "[|" c "|]" => erase c
 notation:10 "⊢" " {|" p "|}" c "{|" q "|}" => FH p (erase c) q
 
@@ -102,11 +102,16 @@ def vc (c : ACom) (q : Assertion) : Prop :=
   match c with
   | ACom.Skip        => True
   | ACom.Assign _ _  => True
-  | ACom.Seq c1 c2   => vc c1 (wp c2 q) /\ (vc c2 q)
-  | ACom.If _ c1 c2  => vc c1 q /\ vc c2 q
-  | ACom.While i b c => (∀ s, i s -> bval b s -> wp c i s) /\
-                        (∀ s, i s -> ¬ bval b s -> q s) /\
-                        vc c i
+  | ACom.Seq c1 c2   => vc c1 (wp c2 q) ∧ (vc c2 q)
+  | ACom.If _ c1 c2  => vc c1 q ∧ vc c2 q
+  | ACom.While i b c =>
+    (∀ s, i s -> bval b s -> wp c i s) ∧ -- { inv ∧ b } c { inv }
+    (∀ s, i s -> ¬ bval b s -> q s) ∧ -- { inv ∧ ¬b } ⊆ q
+    vc c i
+
+/-
+(vc c q) → { wp c q } c { q }
+-/
 
 theorem vc_sound : vc c q -> (⊢ {| wp c q |} c {| q |})
   := by

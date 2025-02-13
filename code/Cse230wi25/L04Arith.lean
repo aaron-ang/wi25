@@ -476,7 +476,7 @@ def comp (a: Aexp) : List Instr :=
 
 def a0: Aexp := add (add (var "x") (num 10)) (add (num 5) (var "y"))
 
-def st0' (v: Vname) : Val :=
+def st0''' (v: Vname) : Val :=
   match v with
   | "x" => 100
   | "y" => 200

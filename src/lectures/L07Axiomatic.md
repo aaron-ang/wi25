@@ -976,10 +976,6 @@ That is, we can prove that the Floyd-Hoare logic is **sound** meaning that if we
 can only **derive valid triples** in the logic. That is, if the proof rules let us
 conclude the triple `⊢ {{p}} c {{q}}` then that triple is in fact valid.
 
-<<<<<<< HEAD
-
-=======
->>>>>>> upstream/main
 ```lean
 theorem fh_sound :  ( ⊢ {{ p }} c {{ q }} ) -> ( ⊧ {{ p }} c {{ q }} )  := by
   sorry

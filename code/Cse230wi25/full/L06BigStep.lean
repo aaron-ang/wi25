@@ -1,4 +1,4 @@
-import Cse230wi25.full.L04Arith
+import Cse230wi25.L04Arith
 
 set_option pp.fieldNotation false
 set_option pp.proofs true
