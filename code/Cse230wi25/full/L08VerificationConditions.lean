@@ -119,7 +119,12 @@ theorem vc_sound : vc c q -> (⊢ {| wp c q |} c {| q |})
   induction c generalizing q
   . case Skip   => constructor
   . case Assign => constructor
-  . case Seq    => sorry
+  . case Seq    =>
+    rename_i c1 c2 ih1 ih2
+    simp []
+    constructor
+    apply ih1; simp_all
+    apply ih2; simp_all
   . case If     => sorry
   . case While  => sorry
 
@@ -167,6 +172,14 @@ theorem ex2 : ⊢ {| λs => s x = 10 |}
 
 /- ----------------------------------------------------------------------------------------------- -/
 
+theorem ex3 : ⊢ {| λs => s x = 10 ∧ s y = 1|}
+                  (x <~ x + y) ;;
+                  (x <~ x + y)
+                {| λs => s x = 12 |}
+  := by
+  apply vc'_sound; simp_all [aval, upd]
+
+/- ----------------------------------------------------------------------------------------------- -/
 
 theorem ex4 : ⊢ {| tt |}
                 WHILE {-@ tt @-} true DO
@@ -175,21 +188,19 @@ theorem ex4 : ⊢ {| tt |}
                 {| ff |}
   := by
   apply vc'_sound
-  simp_all [aval, bval]
+  simp_all [vc', bval]
 
 /- ----------------------------------------------------------------------------------------------- -/
 
 theorem ex_loop :
   ⊢ {| tt |}
-      (y <~ 0)
-      ;;
-      (x <~ 100)
-      ;;
-      (WHILE {-@ λ s => 100 <= s x /\ 0 <= s y @-} y << z DO
+      (y <~ 0) ;;
+      (x <~ 100) ;;
+      (WHILE {-@ λ s => (100 ≤ s x) ∧ (0 ≤ s y) @-} y << z DO
          ((x <~ x + y) ;;
-          (y <~ y - 1))
+          (y <~ y + 1))
       END)
-    {| λ s => 100 <= s x |}
+    {| λ s => 100 ≤ s x |}
   := by
   apply vc'_sound
   simp_all [aval, bval, upd]
@@ -197,14 +208,54 @@ theorem ex_loop :
   calc 100 <= s x       := by assumption
        _   <= s x + s y := by simp_arith []
 
+
+/-
+(x:=n, y:=0)
+(x:=n-1, y:=1)
+(x:=n-2, y:=2)
+...
+(x:=1, y := n-1)
+(x:=0, y := n)
+-/
+
+theorem bob: ∀ {a b}, 0 < a -> a - 1 + (b + 1) = a + b := by
+  intros a b a_pos
+  -- cases a
+  sorry
+
+theorem ex_drain: ∀ {n: Nat},
+ ⊢ {| λ s => s x = n |}
+    (y <~ 0) ;;
+    (WHILE {-@ λ s => s x + s y = n @-} 0 << x DO
+      (x <~ x - 1) ;;
+      (y <~ y + 1)
+     END)
+  {| λ s => s y = n |}
+  := by
+  intro n
+  apply vc'_sound
+  simp_all [aval, bval, upd]
+  constructor
+  . intros s xy_n  x_pos; simp [<-xy_n]; apply bob; assumption
+  . intros s xy_n x_0; simp_all
+
+/-
+x:=n, y:=0
+x:=n-1, y:=0 + n
+x:=n-2, y:=0 + n + (n-1)
+x:=n-3, y:=0 + n + (n-1) + (n-2)
+...
+x:=0, y:=0 + n + (n-1) + ... + 1
+-/
+
 theorem imp_sum' :
-  ⊢ {| λ s => s "x" = i |}
+  ⊢ {| λ s => s "x" = n |}
       (y <~ 0) ;;
-      (WHILE {-@ wsum_inv i @-} (0 << x) DO
+      (WHILE {-@ wsum_inv n @-} (0 << x) DO
         (y <~ y + x) ;;
         (x <~ x - 1)
        END)
-    {| λ s => s "y" = sum i |}
+    {| λ s => s "y" = sum n |}
   := by
   apply vc'_sound
   simp_all [aval, bval, wsum_inv, upd]
