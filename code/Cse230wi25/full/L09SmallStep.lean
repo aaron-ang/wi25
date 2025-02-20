@@ -135,7 +135,7 @@ What are the sequence `c₀ -> c₁ -> c₂ -> c₃` of `Configuration` that we 
 
 @@@ -/
 
-def c₀ : Configuration := sorry
+def c₀ : Configuration := (com₀, st₀)
 def c₁ : Configuration := sorry
 def c₂ : Configuration := sorry
 def c₃ : Configuration := sorry
@@ -161,7 +161,7 @@ above the line holds, *then* the stuff below the line holds as well.
 ```
 ???
 ------------------------- [assign]
-(x <~ a, s) -> ???
+(x <~ a, s) -> (Skip, s [x := aval a s])
 ```
 
 **Sequence**
@@ -177,13 +177,13 @@ above the line holds, *then* the stuff below the line holds as well.
 ```
 bval b s = true
 --------------------------------- [if-true]
-(IF b THEN c1 ELSE c2, s) -> ???
+(IF b THEN c1 ELSE c2, s) -> (c1, s)
 ```
 
 ```
 bval b s = false
 --------------------------------- [if-false]
-(IF b THEN c1 ELSE c2, s) -> ???
+(IF b THEN c1 ELSE c2, s) -> (c2, s)
 ```
 
 **While**
@@ -191,7 +191,7 @@ bval b s = false
 ```
 ???
 -------------------------- [while]
-(WHILE b DO c, s) -> ???
+(WHILE b DO c, s) -> (IF b (c ;; WHILE b c) SKIP, s)
 ```
 
 Next, lets formulate the above as an `inductive SmallStep` relation:
@@ -244,17 +244,16 @@ Lets show that a `Skip` cannot update the state.
 
 @[simp]
 theorem skip_step : ∀ {s},
-  ((Skip, s) ~~>* (Skip, t)) <-> s=t
-  :=
-  by
+  ((Skip, s) ~~>* (Skip, t)) <-> s = t
+  := by
 /-@@@ START:SORRY @@@-/
   intros s
   constructor
-  . case mp  =>
+  . case mp =>
     intros skip_s_t
     cases skip_s_t
     . case refl => rfl
-    . case step _ skip_s_y _ => cases skip_s_y
+    . case step _ skip_s_y _ => cases skip_s_y -- contradiction
   . case mpr =>
     intros
     simp_all []
@@ -269,12 +268,12 @@ Lets show that an assignment `x <~ a` updates the state as follows:
 @@@ -/
 
 @[simp]
-theorem assign_step : ∀ {x a c s},
-  ((((x <~ a) ;; c), s) ~~>* (c, s [x := aval a s]))
-  :=
-  by
+theorem assign_step : ∀ {x a rest s},
+  ((((x <~ a) ;; rest), s) ~~>* (rest, s [x := aval a s]))
+  := by
 /-@@@ START:SORRY @@@-/
-  intros x a c s
+  intros x a rest s
+  -- repeat constructor
   apply star.step
   apply SmallStep.Seq2
   constructor
