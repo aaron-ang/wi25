@@ -198,7 +198,7 @@ Next, lets formulate the above as an `inductive SmallStep` relation:
 
 @@@ -/
 
-inductive SmallStep : (Com × State) -> (Com × State) -> Prop where
+inductive SmallStep : Configuration -> Configuration -> Prop where
    | Assign : ∀ {x a s},
                 SmallStep (x <~ a, s) (Skip, s [x := aval a s])
    | Seq1   : ∀ {c s},
@@ -267,6 +267,9 @@ theorem skip_step : ∀ {s},
 Lets show that an assignment `x <~ a` updates the state as follows:
 @@@ -/
 
+-- inductive arith_step : (Aexp × State) -> Aexp -> Prop where
+--   sorry
+
 @[simp]
 theorem assign_step : ∀ {x a rest s},
   ((((x <~ a) ;; rest), s) ~~>* (rest, s [x := aval a s]))
@@ -325,8 +328,8 @@ theorem smallstep_deterministic : ∀ {cs cs1 cs2},
   case Seq2.Seq1  _ _ _ _ b _ => cases b
   case Seq1.Seq2  _ _ _ _  b  => cases b
   case Seq2.Seq2 =>
-    rename_i c11 c11' _ _ _ _ ih _ _ step_c11
-    have fact := ih step_c11
+    rename_i c11 c11' c11'' s1 s2 ss c s3 ih step_c11
+    have fact : c11' = c ∧ s2 = s3 := ih c s3 step_c11
     simp_all []
 /- @@@ END:SORRY @@@ -/
 

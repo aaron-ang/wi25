@@ -167,8 +167,13 @@ theorem vc_sound : vc c q -> (⊢ {| wp c q |} c {| q |})
     constructor
     apply ih1; simp_all
     apply ih2; simp_all
-  . case If     => sorry
-  . case While  => sorry
+  . case If b c1 c2 ih1 ih2 =>
+      simp_all
+      constructor
+      apply FH.CnsL
+      apply ih1 vcq.left
+      sorry
+  . case While inv b c ih => sorry
 
 /- ----------------------------------------------------------------------------------------------- -/
 
@@ -262,8 +267,9 @@ theorem ex_loop :
 
 theorem bob: ∀ {a b}, 0 < a -> a - 1 + (b + 1) = a + b := by
   intros a b a_pos
-  -- cases a
-  sorry
+  cases a
+  case zero => simp_all
+  case succ a => omega
 
 theorem ex_drain: ∀ {n: Nat},
  ⊢ {| λ s => s x = n |}

@@ -247,6 +247,65 @@ theorem skip_skip': (Skip;; Skip) ≃ Skip := by
     cases skip
     solve_by_elim
 
+  -- determines if a command behaves like SKIP
+def like_skip (c: Com): Prop :=
+  match c with
+  | Com.Skip => true
+  | Com.Assign _ _ => false
+  | Com.Seq c1 c2 => like_skip c1 ∧ like_skip c2
+  | Com.If b c1 c2 => ∀ s, (bval b s ∧ like_skip c1) ∨ (¬bval b s ∧ like_skip c2)
+  | Com.While b c => (∀ s, ¬bval b s) ∨ like_skip c
+
+theorem like_skip_corect (c: Com): like_skip c ↔ c ≃ Skip := by
+  simp [like_skip, equiv_com]
+  constructor
+  case mp =>
+    intros h s t
+    induction c
+    case Skip => rfl
+    case Assign => contradiction
+    case Seq c1 c2 h1 h2 =>
+      constructor
+      sorry
+    case If => sorry
+    case While => sorry
+  case mpr =>
+    intros h
+    sorry
+
+def deskip (c: Com): Com :=
+  match c with
+  | Com.Seq c1 c2 => match deskip c1 with
+                      | Com.Skip => deskip c2
+                      | c1' => Com.Seq c1' c2
+  | Com.If b c1 c2 => Com.If b (deskip c1) (deskip c2)
+  | Com.While b c => Com.While b (deskip c)
+  | _ => c
+
+#eval deskip (Skip ;; Skip ;; Skip ;; Skip)
+
+theorem deskip_correct (c: Com): deskip c ≃ c := by
+  simp [equiv_com]
+  intros s t
+  induction c
+  case Skip => rfl
+  case Assign => rfl
+  case Seq c1 c2 ih1 ih2 =>
+    simp [deskip]
+    cases deskip c1
+    case Skip =>
+      simp_all []
+    case _ =>
+      simp [ih1, ih2]
+  case If b c1 c2 ih1 ih2 =>
+    simp [deskip]
+    repeat constructor
+    sorry
+  case While b c ih =>
+    simp [deskip]
+    repeat constructor
+    sorry
+
 /- @@@
 Lets prove that a sequence of three commands `c1,c2,c3` does the same thing,
 no matter where you put the `;;` i.e. `(c1;;c2);;c3` is equivalant to `c1;;(c2;;c3)`
@@ -260,11 +319,16 @@ theorem seq_assoc : ∀ {c1 c2 c3}, (c1 ;; (c2 ;; c3)) ≃ ((c1 ;; c2) ;; c3) :=
   intros c1 c2 c3 s t
   constructor    -- This breaks the `≃` into tw
   . case mp =>
-    intros c12_3
-    cases c12_3
-    rename_i c12 c3
-    cases c12
-    repeat (constructor; repeat assumption)
+    intros h
+    cases h
+    rename_i st2 h1 h2
+    cases h2
+    rename_i st3 h3 h4
+    constructor
+    constructor
+    exact h1
+    exact h3
+    exact h4
   . case mpr =>
     intros tx12_3
     cases tx12_3
@@ -477,8 +541,11 @@ Lets see if we can formalize this as an *equivalence* ...
 @@@ -/
 
 theorem assign_steps : ∀ {x a s},
-  ( ⟨ x <~ a, s ⟩ ==> t ) <-> t = (s [ x := aval a s])
-  := by sorry
+  ( ⟨ x <~ a, s ⟩ ==> t ) <-> t = (s [ x := aval a s]) := by
+  intros x a s
+  constructor
+  case mp => intros xs; cases xs ; trivial
+  case mpr => intros; simp_all [] ; apply BigStep.Assign
 
 -- how to say 'does not contain x'?
 
@@ -491,11 +558,17 @@ def does_not_contain (a : Aexp) (x :Vname) :=
 
 theorem dnc_upd : ∀ {x a s n},
   does_not_contain a x -> aval a (s [ x := n ]) = aval a s := by
-  sorry
+  intros x a s n dnc_a_x
+  induction a
+  constructor
+  . case var v =>
+      simp_all [aval, upd, does_not_contain]
+      intro h
+      sorry
+  . case add a1 a2 ih1 ih2 => simp_all [aval, upd, does_not_contain]
 
 theorem double_assign :
-  does_not_contain a x -> (( x <~ a ;; y <~ a) ≃ (x <~ a ;; y <~ var x)) :=
-  by
+  does_not_contain a x -> (( x <~ a ;; y <~ a) ≃ (x <~ a ;; y <~ var x)) := by
   simp [equiv_com]; intros dnc_a_x s t; constructor
   . case mp =>
     intros xaya; cases xaya; rename_i s' xa ya

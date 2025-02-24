@@ -89,10 +89,6 @@ How can we *prove* that theorem?
 
 @@@ -/
 
-theorem swap_swaps : ∀ {s t : State} {n m : Val},
-  s x = n -> s y = m -> (⟨ swap, s ⟩ ==> t) -> (t x = m) /\ (t y = n) := by
-  sorry
-
 /- @@@
 
 Instead of the `cases` we can prove a theorem that precisely characterizes what the "shape"
@@ -113,7 +109,7 @@ And now, we can tell `lean` to use that `assign_step` to "fill in" the intermedi
 `s1`, `s2` and `s3` to complete the proof.
 
 @@@ -/
-theorem swap_swaps' : ∀ {s t : State} {n m : Val},
+theorem swap_swaps : ∀ {s t : State} {n m : Val},
   s x = n -> s y = m -> (⟨ swap, s ⟩ ==> t) -> (t x = m) /\ (t y = n) := by
   intros s t n m sxn sym swap_123
   simp_all [swap]
@@ -195,23 +191,6 @@ def sum (n:Nat) : Nat :=
 abbrev csum := y <~ y + x ;; x <~ x - 1
 abbrev wsum := WHILE 0 << x DO csum END
 abbrev imp_sum := "y" <~ 0 ;; wsum
-
-theorem wsum_sum' : (⟨ wsum, s ⟩ ==> t) -> ((t "y") = s "y" + sum (s "x")) := by
-  sorry
-  -- intro wsum_s_t
-  -- generalize h : wsum = ws at wsum_s_t -- LEAN:ANF BUG
-  -- induction wsum_s_t <;> simp_all [wsum]
-  -- . case WhileFalse =>
-  --   cases h
-  --   rename_i c _ s bfalse left _
-  --   simp [<-left] at bfalse
-  --   simp_all [bval, aval, sum]
-  -- . case WhileTrue =>
-  --   cases h
-  --   rename_i b c s s1 t btrue c_s_s1 w_s1_t left right
-  --   simp [<-left] at btrue
-  --   sorry
-
 
 
 theorem csum_sum : (⟨ csum, s ⟩ ==> t) -> ( (t "x" = s "x" - 1) /\ (t "y") = s "y" + s "x")
@@ -981,7 +960,7 @@ conclude the triple `⊢ {{p}} c {{q}}` then that triple is in fact valid.
 @@@ -/
 
 theorem fh_sound :  ( ⊢ {{ p }} c {{ q }} ) -> ( ⊧ {{ p }} c {{ q }} )  := by
-  sorry
+  sorry -- in hw3
 /- @@@
 
 To recap: the Floyd-Hoare rules give us a sound way to construct proofs of programs,
