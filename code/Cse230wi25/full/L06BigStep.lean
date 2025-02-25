@@ -319,16 +319,11 @@ theorem seq_assoc : ∀ {c1 c2 c3}, (c1 ;; (c2 ;; c3)) ≃ ((c1 ;; c2) ;; c3) :=
   intros c1 c2 c3 s t
   constructor    -- This breaks the `≃` into tw
   . case mp =>
-    intros h
-    cases h
-    rename_i st2 h1 h2
-    cases h2
-    rename_i st3 h3 h4
-    constructor
-    constructor
-    exact h1
-    exact h3
-    exact h4
+    intros tx12_3
+    cases tx12_3
+    rename_i tx23
+    cases tx23
+    repeat (constructor; repeat assumption)
   . case mpr =>
     intros tx12_3
     cases tx12_3
@@ -564,26 +559,17 @@ theorem dnc_upd : ∀ {x a s n},
   . case var v =>
       simp_all [aval, upd, does_not_contain]
       intro h
-      sorry
+      simp_all [Eq.symm]
   . case add a1 a2 ih1 ih2 => simp_all [aval, upd, does_not_contain]
 
 theorem double_assign :
   does_not_contain a x -> (( x <~ a ;; y <~ a) ≃ (x <~ a ;; y <~ var x)) := by
   simp [equiv_com]; intros dnc_a_x s t; constructor
-  . case mp =>
-    intros xaya; cases xaya; rename_i s' xa ya
+  all_goals
+    intros xaya; cases xaya;
     constructor
     assumption
-    simp [assign_steps]
-    cases ya
-    have bb : aval a s' = aval (var x) s' := by
-      cases xa
-      simp [aval, upd]
-      apply dnc_upd
-      assumption
-    simp_all []
-  . case mpr =>
-    sorry
+    simp_all [aval, upd, assign_steps, dnc_upd]
 
 
 
