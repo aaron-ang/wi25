@@ -277,12 +277,26 @@ def deskip (c: Com): Com :=
   match c with
   | Com.Seq c1 c2 => match deskip c1 with
                       | Com.Skip => deskip c2
-                      | c1' => Com.Seq c1' c2
+                      | c1' => Com.Seq c1' (deskip c2)
   | Com.If b c1 c2 => Com.If b (deskip c1) (deskip c2)
   | Com.While b c => Com.While b (deskip c)
   | _ => c
 
-#eval deskip (Skip ;; Skip ;; Skip ;; Skip)
+
+def deskip' (c: Com): Com :=
+  match c with
+  | Com.Seq Com.Skip c2 => deskip c2
+  | Com.Seq c1 Com.Skip => deskip c1
+  | Com.Seq c1 c2 => Com.Seq (deskip c1) (deskip c2)
+  | Com.If b c1 c2 => Com.If b (deskip c1) (deskip c2)
+  | Com.While b c => Com.While b (deskip c)
+  | _ => c
+
+#eval deskip (Skip ;; Skip ;; x <~ 2)
+
+#eval deskip' (Skip ;; Skip ;; x <~ 2;; Skip ;; Skip)
+
+#eval deskip' (Skip ;; Skip ;; Skip ;; Skip)
 
 theorem deskip_correct (c: Com): deskip c ≃ c := by
   simp [equiv_com]
