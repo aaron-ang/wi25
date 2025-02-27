@@ -279,7 +279,7 @@ theorem assign_step : ∀ {x a rest s},
   -- repeat constructor
   apply star.step
   apply SmallStep.Seq2
-  constructor
+  apply SmallStep.Assign
   apply star.step
   apply SmallStep.Seq1
   apply star.refl
@@ -296,6 +296,7 @@ Lets revisit our old example with `(com₀, st₀) ~~>* ...`
 example : (com₀, st₀) ~~>* (Skip, st₀[ x := 10 ][ y := 11][ z := 13])
   := by
 /-@@@ START:SORRY @@@-/
+  -- repeat constructor
   apply star_trans
   apply assign_step
   apply star_trans
@@ -474,6 +475,7 @@ We can now use the above lemma to complete the proof of the `smallstep_implies_b
 
 theorem smallstep_implies_bigstep : ∀ {c s t}, ((c, s) ~~>* (Skip, t)) -> (⟨ c, s ⟩ ==> t)  := by
   intros c s t steps
+  -- overcome Lean's bug on induction on tuples
   generalize h1 : (c, s)    = c_s    at steps --- this is ANF / Nico's tip
   generalize h2 : (Skip, t) = skip_t at steps --- this is ANF / Nico's tip
   induction steps generalizing c s t <;> cases h1 <;> cases h2
