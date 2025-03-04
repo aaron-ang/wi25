@@ -1,10 +1,11 @@
 
+```lean
 import Cse230wi25.L05Evidence
 
 set_option pp.fieldNotation false
 set_option pp.proofs true
+```
 
-/- @@@
 
 # Type Soundness via Small-Step Semantics
 
@@ -16,38 +17,38 @@ Our old `IMP` language has no type-safety issues because, well, every variable i
 
 Let us extend the set of possible `Val` to include *floating* point values as well.
 
-@@@ -/
 
 
+```lean
 inductive Val where
   | Iv : Int -> Val
   | Fv : Float -> Val
   deriving Repr
 
 open Val
+```
 
-/- @@@
 We can have *integer* values like
-@@@ -/
 
+```lean
 #eval (Iv 12)
+```
 
-/- @@@
 Or *floating point* values like
-@@@ -/
 
+```lean
 #eval (Fv 3.14)
+```
 
 
-/- @@@
 
 As before,
 
 - an *identifier* or *variable* `Vname` is just a `String` and
 - a `State` maps `Vname` to `Val` (which is either an `Int` or a `Float`).
 
-@@@ -/
 
+```lean
 abbrev Vname := String
 
 abbrev State := Vname -> Val
@@ -56,18 +57,18 @@ abbrev State := Vname -> Val
   λ y => if y = x then v else s y
 
 notation:10 s " [ " x " := " v " ] " => upd s x v
+```
 
-/- @@@
 
 ### Arithmetic and Boolean Expressions
 
 Finally, we can extend `Aexp` to include `Int` and `Float` constants, together with
 the usual binary operations as:
 
-@@@ -/
 
 
 
+```lean
 inductive Aexp where
   | Ic  : Int -> Aexp            -- integer constant
   | Fc  : Float -> Aexp          -- floating point constant
@@ -121,8 +122,8 @@ def z := "z"
 def aexp0 : Aexp := x#1 + y#1 + z#1 + 5
 
 #eval aexp0
+```
 
-/- @@@
 
 ### Evaluating Expressions
 
@@ -134,9 +135,9 @@ an `inductive` predicate, where we need only define the
 cases where a value is produced and we can *omit* the
 cases where an `Int` is added to / compared against a `Float`.
 
-@@@ -/
 
 
+```lean
 inductive Taval : Aexp -> State -> Val -> Prop where
 
   | T_Ic  : ∀ {i s},
@@ -186,16 +187,16 @@ def st0 : State := fun x => match x with
   | "x" => Iv 3
   | "y" => Iv 4
   | _   => Iv 0
+```
 
-/- @@@
 
 ### Floating Commands
 
 Next, as with plain IMP, we define the type `Com`
 of commands, now using the new `Aexp` and `Bexp`.
 
-@@@ -/
 
+```lean
 inductive Com where
   | Skip   : Com
   | Assign : Vname -> Aexp -> Com
@@ -211,8 +212,8 @@ infix:10 "<~"  => Com.Assign
 infixr:8 ";;" => Com.Seq
 notation:10 "IF" b "THEN" c1 "ELSE" c2 => Com.If b c1 c2
 notation:12 "WHILE" b "DO" c "END" => Com.While b c
+```
 
-/- @@@
 
 And we can define a `SmallStep` operational semantics
 for `Com` similar to that from the previous lecture.
@@ -220,8 +221,8 @@ for `Com` similar to that from the previous lecture.
 **NOTE** Instead of using the *functions* `aval` and `bval`
 we simply use the *relations* `Taval` and `Tbval`.
 
-@@@ -/
 
+```lean
 abbrev Configuration := (Com × State)
 
 
@@ -250,8 +251,8 @@ inductive Step : Configuration -> Configuration -> Prop where
                 Step (Com.While b c, s) (Com.If b (c ;; (Com.While b c)) Skip, s)
 
 notation:12 cs "~~>" cs' => Step cs cs'
+```
 
-/- @@@
 
 ### Getting Stuck / Going Wrong
 
@@ -284,14 +285,14 @@ or go wrong because you mixed up the wrong values for some operation.
 For our simple `FIMP` we require just two types "int" and "float" and so we can model
 these as a new (lean) type `Ty` with the constructors (values) `TInt` and `TFloat`
 
-@@@ -/
 
+```lean
 inductive Ty where
   | TInt : Ty
   | TFloat : Ty
   deriving Repr
+```
 
-/- @@@
 
 ### Environments
 
@@ -299,21 +300,21 @@ Next, we need a *table* or a *map* that records the `Ty` for each program variab
 Often this structure is called a **Type `Environment`** and in PL papers, written
 using the letter `Γ`
 
-@@@ -/
 
 
+```lean
 open Ty
 
 abbrev Env := Vname -> Ty
+```
 
-/- @@@
 For example, here is an `Env`ironment where *every* variable is presumed to be an integer.
-@@@ -/
 
+```lean
 @[simp] def Γᵢ : Env := fun _ => TInt
+```
 
 
-/- @@@
 
 ### Typing Judgments
 
@@ -373,9 +374,9 @@ apply for each kind of expression. (Why?)
 ```
 
 which we can specify as an `inductive` predicate:
-@@@ -/
 
 
+```lean
 inductive HasTyA : Env -> Aexp -> Ty -> Prop where
 
   | Ty_Ic : ∀ {Γ i},
@@ -397,8 +398,8 @@ inductive HasTyA : Env -> Aexp -> Ty -> Prop where
 
 
 notation:10 Γ " ⊢ " a " : " τ => HasTyA Γ a τ
+```
 
-/- @@@
 
 Let us check our example
 
@@ -414,14 +415,14 @@ Let us check our example
 
 Lets see why having **syntax directed** rules is useful!
 
-@@@ -/
 
+```lean
 example : Γᵢ ⊢ (V x + (Ic 10 + V y)) : TInt := by
   sorry
+```
 
 
 
-/- @@@
 ### Typing Rules for Boolean Expressions
 
 Next, lets work out the rules for `Bexp` -- here we can just write
@@ -449,9 +450,9 @@ Next, lets work out the rules for `Bexp` -- here we can just write
 ```
 
 Lets formalize the above as an `inductive` predicate:
-@@@ -/
 
 
+```lean
 inductive HasTyB : Env -> Bexp -> Prop where
   | Ty_Bc   : ∀ {Γ v},
               HasTyB Γ (Bc v)
@@ -469,18 +470,18 @@ inductive HasTyB : Env -> Bexp -> Prop where
               HasTyB Γ (Less a1 a2)
 
 notation:10 Γ " ⊢ " a  => HasTyB Γ a
+```
 
-/- @@@
 
 Again, the **syntax-directed** nature of the rules
 makes establishing the "has-type" facts super easy!
 
-@@@ -/
 
+```lean
 example : Γᵢ ⊢ (V x + (Ic 10 + V y)) << Ic 29 := by
   sorry
+```
 
-/- @@@
 
 ### Typing Rules for Commands
 
@@ -533,8 +534,8 @@ What should the rules look like so that we can establish / reject appropriately?
 
 Lets define the above as an `inductive` predicate
 
-@@@ -/
 
+```lean
 inductive HasTyC : Env -> Com -> Prop where
   | Ty_Skip   : ∀ {Γ},
                 HasTyC Γ Skip
@@ -560,8 +561,8 @@ notation:10 Γ " ⊢ " c  => HasTyC Γ c
 -- Yay for syntax directed!
 example : Γᵢ ⊢ "x" <~ Ic 3 ;; "y" <~ (V "x") + (Ic 4) := by
   repeat constructor
+```
 
-/- @@@
 ## Type Soundness
 
 Ok great, so we made up a system of "type checking" rules.
@@ -597,31 +598,29 @@ Let's try to formalize this in Lean,
 2. for *bool* expressions and then,
 3. for *commands*.
 
-@@@ -/
 
-/- @@@
 ### Types and their Values
 
 First, let us write down the relationship between each **value** and its corresponding **type**.
 
-@@@ -/
 
+```lean
 @[simp] def type(v: Val) : Ty := match v with
   | Iv _ => TInt
   | Fv _ => TFloat
+```
 
-/- @@@
 A `State` `s` is **well-formed** with respect to a type environment `Γ` if every variable's value in `s`
 is that specified in `Γ`
-@@@ -/
 
+```lean
 @[simp] def Wf (Γ: Env) (s: State) : Prop :=
   ∀ x, Γ x = type (s x)
 
 notation:10 Γ " ⊧ " s  => Wf Γ s
+```
 
 
-/- @@@
 ### Arithmetic
 
 Lets start with *specifying* the *preservation* and *progress* properties for `Aexp`
@@ -652,16 +651,14 @@ If the `AExp`  does `__________________________` THEN `_________________________
   __________________________________________
 ```
 
-@@@ -/
 
-/- @@@
 
 ### Preservation
 
 Now, lets try to prove it!
 
-@@@ -/
 
+```lean
 theorem arith_preservation : ∀ { Γ a τ s v },
   (Γ ⊧ s) -> (Γ ⊢ a : τ) -> Taval a s v -> type v = τ
   := by
@@ -678,13 +675,13 @@ theorem arith_preservation : ∀ { Γ a τ s v },
     cases a_s_v
     . rename_i _ _ av1 _; apply (ih1 av1)
     . simp_all
+```
 
-/- @@@
 ### Progress
 
 Now, lets try to prove it!
-@@@ -/
 
+```lean
 theorem arith_progress': ∀ { Γ a τ s },
   (Γ ⊧ s) -> (Γ ⊢ a : τ) ->  ∃ v, Taval a s v  := by
   intros Γ a τ s G_s G_a_t
@@ -694,12 +691,12 @@ theorem arith_progress': ∀ { Γ a τ s },
   . case Ty_V x  => repeat constructor
   . case Ty_AddI => sorry
   . case Ty_AddF => sorry
+```
 
-/- @@@
 The (slightly) tricky bit is to prove the progress for `a1 + a2` expressions.
 Lets try to figure out what a helper lemma would look like!
-@@@ -/
 
+```lean
 @[simp] def ty_val (t:Ty) (v:Val) : Prop :=
   match t with
   | TInt => ∃ n, v = Iv n
@@ -728,11 +725,11 @@ theorem add_progress: ∀ {Γ a1 a2 τ s},
   cases τ
   . case TInt   => cases h1'; cases h2'; simp_all; constructor; apply T_AddI; repeat assumption
   . case TFloat => cases h1'; cases h2'; simp_all; constructor; apply T_AddF; repeat assumption
+```
 
-/- @@@
 Now we can use `add_progress` to complete the proof of `arith_progress`.
-@@@ -/
 
+```lean
 theorem arith_progress: ∀ { Γ a τ s },
   (Γ ⊧ s) -> (Γ ⊢ a : τ) ->  ∃ v, Taval a s v  := by
   intros Γ a τ s G_s G_a_t
@@ -742,11 +739,11 @@ theorem arith_progress: ∀ { Γ a τ s },
   . case Ty_V x  => repeat constructor
   . case Ty_AddI => apply add_progress; repeat assumption
   . case Ty_AddF => apply add_progress; repeat assumption
+```
 
 
 
 
-/- @@@
 ### Boolean Expressions
 
 These more or less follow the same structure as the
@@ -754,8 +751,8 @@ arithmetic expressions, except that instead `a1 < a2`
 requires a bit of elbow grease, similar to `add_progress`.
 
 **QUESTION** Why don't we need a `bool_preservation` theorem???
-@@@ -/
 
+```lean
 theorem less_progress : ∀ {Γ a1 a2 s v1 v2 τ},
   (Γ ⊧ s) -> (Γ ⊢ a1 : τ) -> (Γ ⊢ a2 : τ) ->
   (Taval a1 s v1) -> (Taval a2 s v2) ->
@@ -791,8 +788,8 @@ theorem bool_progress: ∀ { Γ s } { b : Bexp },
     have h1 : ∃ v1, Taval a1 s v1 := by apply arith_progress; repeat assumption
     have h2 : ∃ v2, Taval a2 s v2 := by apply arith_progress; repeat assumption
     cases h1; cases h2; apply less_progress; repeat assumption
+```
 
-/- @@@
 ### Commands
 
 What should "preservation" and "progress" theorems look like for `Com` ?
@@ -829,8 +826,8 @@ If the `Com`  does `__________________________` THEN `__________________________
 Let us split the preservation into two *separate* theorems the `Com` and `State` parts of the `Configuration`.
 Preservation follows directly by manipulating the typing rules.
 
-@@@ -/
 
+```lean
 theorem preservation1_com : ∀ { Γ } { c c' : Com } { s s' : State },
   (Γ ⊧ s) -> (Γ ⊢ c) -> ((c, s) ~~> (c', s')) -> (Γ ⊢ c')
   := by
@@ -851,15 +848,15 @@ theorem preservation1_state : ∀ { Γ } { c c' : Com } { s s' },
   induction ty_c generalizing c' s <;> cases step_c_c' <;> repeat trivial
   . case Ty_Assign.Assign => apply update_ty; trivial; apply arith_preservation; repeat trivial
   . case Ty_Seq.Seq2      => rename_i ih1 _ _ _; apply ih1; repeat trivial
+```
 
 
-/- @@@
 #### Commands: Progress
 
 Progress requires using the `arith_progress` and `bool_progress`.
-@@@ -/
 
 
+```lean
 theorem progress1 : ∀ { Γ s } { c : Com},
   (Γ ⊧ s) -> (Γ ⊢ c) ->  ¬ (c = Skip) -> ∃ c' s', (c, s) ~~> (c', s')
   := by
@@ -897,22 +894,22 @@ theorem progress1 : ∀ { Γ s } { c : Com},
   . case Ty_While =>
     apply Exists.intro; apply Exists.intro;
     apply Step.While
+```
 
 
-/- @@@
 #### Commands: Multiple Steps!
 
 We would like to say something not just about a *single* step but about *all* the configurations
 that may be reached by zero or more *steps*.
 
-@@@ -/
 
 
+```lean
 abbrev Steps := star Step
 
 notation:12 cs "~~>*" cs' => Steps cs cs'
+```
 
-/- @@@
 
 Lets try to work out what preservation and progress look like for *many* steps.
 
@@ -939,8 +936,8 @@ If the program does something THEN that thing is *expected* or *predicted*
   __________________________________________
 ```
 
-@@@ -/
 
+```lean
 theorem progress : ∀ { Γ } { c c' : Com } { s s' : State},
   (Γ ⊧ s) -> (Γ ⊢ c) -> ((c, s) ~~>* (c', s')) -> ¬ (c' = Skip) ->
   ∃ c'' s'', (c', s') ~~> (c'', s'')
@@ -964,3 +961,6 @@ theorem progress : ∀ { Γ } { c c' : Com } { s s' : State},
     have wf_s2 : Wf Γ s2     := by apply (preservation1_state ty_c wf_s step1)
     apply (ih wf_s2 ty_c2 not_skip)
     repeat trivial
+```
+
+
