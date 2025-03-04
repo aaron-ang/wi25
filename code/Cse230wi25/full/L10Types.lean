@@ -136,6 +136,10 @@ cases where an `Int` is added to / compared against a `Float`.
 
 @@@ -/
 
+def st0 : State := fun x => match x with
+  | "x" => Iv 3
+  | "y" => Iv 4
+  | _   => Iv 0
 
 inductive Taval : Aexp -> State -> Val -> Prop where
 
@@ -157,6 +161,11 @@ inductive Taval : Aexp -> State -> Val -> Prop where
              Taval (Add a1 a2) s (Fv (r1 + r2))
 
 open Taval
+
+example: Taval (Add (Ic 10) (Ic 20)) st0 (Iv (10 + 20)) := by
+  constructor
+  constructor
+  constructor
 
 inductive Tbval : Bexp -> State -> Bool -> Prop where
 
@@ -180,12 +189,6 @@ inductive Tbval : Bexp -> State -> Bool -> Prop where
               Tbval (Less a1 a2) s (r1 < r2)
 
 open Tbval
-
-
-def st0 : State := fun x => match x with
-  | "x" => Iv 3
-  | "y" => Iv 4
-  | _   => Iv 0
 
 /- @@@
 
@@ -312,6 +315,7 @@ For example, here is an `Env`ironment where *every* variable is presumed to be a
 
 @[simp] def Γᵢ : Env := fun _ => TInt
 
+@[simp] def Γα : Env := fun _ => if x.get 0 = '_' then TFloat else TInt
 
 /- @@@
 
@@ -357,19 +361,20 @@ apply for each kind of expression. (Why?)
 ```
 
 ----------------[int]
-Γ ⊢ 3 : ???
+Γ ⊢ 3 : TInt
 
 
 ----------------[float]
-Γ ⊢ 3.14 : ???
+Γ ⊢ 3.14 : TFloat
 
 
 ----------------[var]
-Γ ⊢ x : ???
+Γ ⊢ x : Γ x
 
 
---------------------[add]
-Γ ⊢ a1 + a2 : ???
+Γ ⊢ a1 : t  ∧  Γ ⊢ a2 : t
+----------------------------[add]
+Γ ⊢ a1 + a2 : t
 ```
 
 which we can specify as an `inductive` predicate:
@@ -417,7 +422,11 @@ Lets see why having **syntax directed** rules is useful!
 @@@ -/
 
 example : Γᵢ ⊢ (V x + (Ic 10 + V y)) : TInt := by
-  sorry
+  constructor
+  constructor
+  constructor
+  constructor
+  constructor
 
 
 
@@ -478,7 +487,13 @@ makes establishing the "has-type" facts super easy!
 @@@ -/
 
 example : Γᵢ ⊢ (V x + (Ic 10 + V y)) << Ic 29 := by
-  sorry
+  constructor
+  constructor
+  constructor
+  constructor
+  constructor
+  constructor
+  constructor
 
 /- @@@
 
@@ -513,20 +528,20 @@ What should the rules look like so that we can establish / reject appropriately?
 Γ ⊢ skip
 
 
-???
----------------[assign]
+Γ ⊢ a : Γ x
+---------------------[assign]
 Γ ⊢ x <~ a
 
 
-???
+Γ ⊢ c1 ∧ Γ ⊢ c2
 -------------------[seq]
 Γ ⊢ c1 ;; c2
 
-???
+Γ ⊢ b ∧ Γ ⊢ c1 ∧ Γ ⊢ c2
 -------------------------[if]
 Γ ⊢ if b then c1 else c2
 
-???
+Γ ⊢ b ∧ Γ ⊢ c
 -------------------------[while]
 Γ ⊢ while b do c
 ```
